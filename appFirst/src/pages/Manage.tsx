@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trash2, UploadCloud } from "lucide-react";
+import { toast } from "sonner";
 import AppFrame from "@/components/AppFrame";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useCreateShort, useDeleteShort, useShorts } from "@/hooks/useShorts";
@@ -23,9 +24,14 @@ const Manage = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!videoFile) return;
-    await createShort.mutateAsync({ ...form, video: videoFile });
-    setForm({ title: "", price: "", location: "", description: "" });
-    setVideoFile(null);
+    try {
+      await createShort.mutateAsync({ ...form, video: videoFile });
+      toast.success("Short uploaded.");
+      setForm({ title: "", price: "", location: "", description: "" });
+      setVideoFile(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Short upload failed.");
+    }
   };
 
   return (

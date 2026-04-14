@@ -3,6 +3,13 @@ import { supabase } from "@/lib/supabase";
 
 const STORAGE_BUCKET = (import.meta.env.VITE_SUPABASE_STORAGE_BUCKET as string | undefined)?.trim() || "roomio-media";
 
+const formatSupabaseError = (error: unknown, fallback: string) => {
+  const e = error as { message?: string; details?: string; hint?: string; code?: string } | null;
+  const msg = e?.message || fallback;
+  const extras = [e?.details, e?.hint, e?.code].filter(Boolean).join(" | ");
+  return extras ? `${msg} (${extras})` : msg;
+};
+
 export interface HostelShort {
   id: string;
   user_id: string;
@@ -46,7 +53,14 @@ export const useCreateShort = () => {
       const ext = payload.video.name.split(".").pop()?.toLowerCase() || "mp4";
       const path = `shorts/videos/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
       const upload = await supabase.storage.from(STORAGE_BUCKET).upload(path, payload.video, { upsert: false });
-      if (upload.error) throw upload.error;
+      if (upload.error) {
+        throw new Error(
+          formatSupabaseError(
+            upload.error,
+            `Upload failed. Check Storage bucket "${STORAGE_BUCKET}" exists and allows insert/select.`,
+          ),
+        );
+      }
 
       const video_url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
 
@@ -59,7 +73,14 @@ export const useCreateShort = () => {
         description: payload.description,
         location: payload.location,
       });
-      if (error) throw error;
+      if (error) {
+        throw new Error(
+          formatSupabaseError(
+            error,
+            "Failed to save short row in hostel_shorts. Check table schema/policies.",
+          ),
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shorts"] });
