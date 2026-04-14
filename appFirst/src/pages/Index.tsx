@@ -11,6 +11,22 @@ import { useShorts } from "@/hooks/useShorts";
 import HomeShortsStrip from "@/components/HomeShortsStrip";
 import RoomioAIChat from "@/components/RoomioAIChat";
 
+function getErrorText(error: unknown): string {
+  if (!error) return "Unknown error";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message || "Unknown error";
+
+  const e = error as { message?: string; details?: string; hint?: string; code?: string };
+  const combined = [e?.message, e?.details, e?.hint, e?.code].filter(Boolean).join(" | ");
+  if (combined) return combined;
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
+  }
+}
+
 const Index = () => {
   const [search, setSearch] = useState("");
   const { data: hostels = [], isLoading, error } = useHostels();
@@ -147,7 +163,7 @@ const Index = () => {
           <div className="text-center py-12 text-muted-foreground">Loading hostels...</div>
         ) : error ? (
           <div className="text-center py-12 text-destructive">
-            Failed to load hostels from Supabase: {error instanceof Error ? error.message : "Unknown error"}
+            Failed to load hostels from Supabase: {getErrorText(error)}
           </div>
         ) : (
           <HostelList
