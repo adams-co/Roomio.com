@@ -4,16 +4,18 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseKey =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ||
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY as string | undefined);
-const fallbackUrl = "https://example.supabase.co";
-const fallbackKey = "public-anon-key";
+export const supabaseEnvError =
+  !supabaseUrl || !supabaseKey
+    ? "Missing Supabase envs in deployment: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY (or VITE_SUPABASE_ANON_KEY)."
+    : null;
 
-if (!supabaseUrl || !supabaseKey) {
+if (supabaseEnvError) {
   console.warn(
     "[supabase] Missing VITE_SUPABASE_URL or key. Set VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY).",
   );
 }
 
-export const supabase = createClient(supabaseUrl || fallbackUrl, supabaseKey || fallbackKey, {
+export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseKey || "public-anon-key", {
   auth: {
     persistSession: false,
     autoRefreshToken: false,

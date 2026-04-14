@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseEnvError } from "@/lib/supabase";
 
 const STORAGE_BUCKET = (import.meta.env.VITE_SUPABASE_STORAGE_BUCKET as string | undefined)?.trim() || "roomio-media";
 
@@ -35,6 +35,7 @@ export const useShorts = () => {
   return useQuery({
     queryKey: ["shorts"],
     queryFn: async (): Promise<HostelShort[]> => {
+      if (supabaseEnvError) throw new Error(supabaseEnvError);
       const { data, error } = await supabase.from("hostel_shorts").select("*").order("created_at", { ascending: false });
       if (error) return [];
       return (data as HostelShort[]) || [];
